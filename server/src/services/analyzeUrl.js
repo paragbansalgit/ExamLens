@@ -19,7 +19,7 @@ export async function analyzeUrl(rawUrl) {
 
   try {
     browser = await chromium.launch({
-      headless: true,
+      headless: false,
     });
 
     const context = await browser.newContext({

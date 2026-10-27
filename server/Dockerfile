@@ -10,4 +10,9 @@ COPY . .
 
 ENV NODE_ENV=production
 
-CMD ["npm", "start"]
+# Install a virtual display for headed Chromium
+RUN apt-get update \
+    && apt-get install -y xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
+CMD ["xvfb-run", "-a", "npm", "start"]
