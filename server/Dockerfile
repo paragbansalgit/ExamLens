@@ -13,5 +13,4 @@ ENV NODE_ENV=production
 RUN apt-get update \
     && apt-get install -y xvfb \
     && rm -rf /var/lib/apt/lists/*
-
-CMD ["xvfb-run", "-a", "npm", "start"]
+CMD ["sh", "-c", "which xvfb-run && xvfb-run -a npm start"]
