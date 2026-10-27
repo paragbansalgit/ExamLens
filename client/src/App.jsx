@@ -407,41 +407,42 @@ export default function App() {
                   Export CSV
                 </button>
               </section>
-             
 
-            
-{summary && (
-  <section className="statsGrid">
-    <Stat
-      label="Calculated score"
-      // value={summary.score ?? "—"}
-      value={`${summary.score ?? 0}/${summary.total ?? 0}`}
-      detail="Verify the marking scheme"
-      tone="score"
-    />
-    <Stat
-      label="Correct"
-      value={`${summary.correct ?? 0}/${summary.total ?? 0}`}
-      detail={`${summary.total
-        ? Math.round(((summary.correct ?? 0) / summary.total) * 100)
-        : 0}% of all questions`}
-      tone="correct"
-    />
-    <Stat
-      label="Incorrect"
-      value={`${summary.incorrect ?? 0}/${summary.total ?? 0}`}
-      detail="1/3 Negative marking may apply"
-      tone="incorrect"
-    />
-    <Stat
-      label="Unattempted"
-      value={`${summary.unattempted ?? 0}/${summary.total ?? 0}`}
-      detail={`${summary.needsReview ?? 0} need review`}
-      tone="blank"
-    />
-  </section>
-)}
-
+              {summary && (
+                <section className="statsGrid">
+                  <Stat
+                    label="Calculated score"
+                    // value={summary.score ?? "—"}
+                    value={`${summary.score ?? 0}/${summary.total ?? 0}`}
+                    detail="Verify the marking scheme"
+                    tone="score"
+                  />
+                  <Stat
+                    label="Correct"
+                    value={`${summary.correct ?? 0}/${summary.total ?? 0}`}
+                    detail={`${
+                      summary.total
+                        ? Math.round(
+                            ((summary.correct ?? 0) / summary.total) * 100,
+                          )
+                        : 0
+                    }% of all questions`}
+                    tone="correct"
+                  />
+                  <Stat
+                    label="Incorrect"
+                    value={`${summary.incorrect ?? 0}/${summary.total ?? 0}`}
+                    detail="1/3 Negative marking may apply"
+                    tone="incorrect"
+                  />
+                  <Stat
+                    label="Unattempted"
+                    value={`${summary.unattempted ?? 0}/${summary.total ?? 0}`}
+                    detail={`${summary.needsReview ?? 0} need review`}
+                    tone="blank"
+                  />
+                </section>
+              )}
 
               {summary?.sections?.length > 0 && (
                 <section className="sectionCard">
@@ -498,8 +499,8 @@ export default function App() {
               )}
               <section>
                 {data && (
-  <QuestionStatusChart questions={data.questions ?? []} />
-)}
+                  <QuestionStatusChart questions={data.questions ?? []} />
+                )}
               </section>
 
               <section className="sectionCard">
@@ -565,7 +566,6 @@ export default function App() {
                   )}
                 </div>
               </section>
-              
 
               <p className="disclaimer">
                 Verify extracted answers against the official response sheet
@@ -631,6 +631,13 @@ function Question({ q }) {
           {meta.label}
         </span>
       </div>
+
+      {q.passage && (
+  <div className="questionPassage">
+    <strong>Passage</strong>
+    <p>{q.passage}</p>
+  </div>
+)}
 
       <p className="questionText">{questionText}</p>
 
