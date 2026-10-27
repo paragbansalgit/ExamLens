@@ -16,23 +16,24 @@ const PORT = Number(process.env.PORT || 10000);
 
 const MAX_HTML_SIZE = 10 * 1024 * 1024;
 
+
 app.use(helmet());
 
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://exam-lens-8g96bw7ng-exam-lens.vercel.app",
+      ...(process.env.CLIENT_ORIGIN
+        ? [process.env.CLIENT_ORIGIN]
+        : []),
+    ],
   })
 );
 
-// The JSON limit must allow for HTML plus JSON encoding overhead.
-const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "https://exam-lens-8g96bw7ng-exam-lens.vercel.app",
-  ],
-};
-
-app.use(cors(corsOptions));
+// Parse JSON requests, including uploaded HTML encoded in JSON.
+// The extra capacity allows for JSON encoding overhead.
+app.use(express.json({ limit: "12mb" }));
 
 app.use(
   "/api",
