@@ -11,7 +11,7 @@ import { extractRrbSectionController } from "./adapters/rrbSectionController.js"
 import { scoreQuestions } from "./services/scoring.js";
 
 const app = express();
-const port = Number(process.env.PORT || 4000);
+const PORT = Number(process.env.PORT || 10000);
 
 const MAX_HTML_SIZE = 10 * 1024 * 1024;
 
@@ -147,6 +147,6 @@ app.use((error, _req, res, next) => {
   return next(error);
 });
 
-app.listen(port, () => {
-  console.log(`RRB Analyzer API listening on http://localhost:${port}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`RRB Analyzer API listening on 0.0.0.0:${PORT}`);
 });
