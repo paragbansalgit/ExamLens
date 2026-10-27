@@ -194,6 +194,62 @@ function extractSection($, table) {
   return match ? clean(match[1]) : "RRB Section Controller CBT 1";
 }
 
+
+
+function extractPassage($, table) {
+  const rows = $(table)
+    .find("table.questionRowTbl")
+    .first()
+    .find("tr")
+    .toArray();
+
+  let foundComprehension = false;
+  const passageParts = [];
+
+  for (const row of rows) {
+    const rowNode = $(row);
+    const rowText = clean(rowNode.text());
+
+    if (!foundComprehension) {
+      if (/comprehension\s*:/i.test(rowText)) {
+        foundComprehension = true;
+      }
+      continue;
+    }
+
+    // Stop at the first question.
+    if (/SubQuestion No\s*:/i.test(rowText) || /^\s*Q\.\s*\d+/i.test(rowText)) {
+      break;
+    }
+
+    if (!rowText) continue;
+
+    // Remove instructions while preserving passage text in the same row.
+    let text = rowText
+      .replace(
+        /^read (?:the passage carefully|the following passage|the passage|the given passage)[^.!?]*[.!?]\s*/i,
+        ""
+      )
+      .trim();
+
+    // Also handle the wording found in your uploaded HTML.
+    text = text.replace(
+      /^read the passage carefully and answer the questions given below\.?\s*/i,
+      ""
+    ).trim();
+
+    if (text && !/^comprehension\s*:/i.test(text)) {
+      passageParts.push(text);
+    }
+  }
+
+  const passage = clean(passageParts.join(" "));
+  return passage || null;
+}
+
+
+
+
 function parseQuestion($, table, index) {
   const root = $(table);
 
@@ -209,6 +265,9 @@ function parseQuestion($, table, index) {
   const statusText = getLabeledValue($, metadata, "Status");
   const number = extractQuestionNumber($, table, index);
   const questionText = extractQuestionText($, table);
+  const passage = extractPassage($, table);
+  console.log("QUESTION:", number, "PASSAGE FOUND:", Boolean(passage));
+console.log("PASSAGE PREVIEW:", passage?.slice(0, 150));
   const options = extractOptions($, table);
 
   const chosenMatch = clean(chosenOption).match(/\b([A-D])\b/i);
@@ -240,17 +299,20 @@ function parseQuestion($, table, index) {
     status = "unattempted";
   }
 
-  return {
-    id: `q-${number}`,
-    number,
-    section: extractSection($, table),
-    questionText,
-    options,
-    selectedOption,
-    correctOption,
-    status,
-    sourceStatus: statusText || "Unknown",
-  };
+  
+ return {
+  id: `q-${number}`,
+  number,
+  section: extractSection($, table),
+  questionText,
+  passage,
+  options,
+  selectedOption,
+  correctOption,
+  status,
+  sourceStatus: statusText || "Unknown",
+};
+
 }
 
 export function extractRrbSectionController(html, sourceUrl = "") {
@@ -271,13 +333,17 @@ export function extractRrbSectionController(html, sourceUrl = "") {
 
   if (questionTables.length === 0) {
     return {
-      sourceUrl,
-      exam: clean($("title").text()) || "RRB Answer Analysis",
-      questions: [],
-      warnings: [
-        "No table.questionPlTbl elements were found. Ensure the HTML file contains the rendered response-sheet questions.",
-      ],
-    };
+  id: `q-${number}`,
+  number,
+  section: extractSection($, table),
+  questionText,
+  passage,
+  options,
+  selectedOption,
+  correctOption,
+  status,
+  sourceStatus: statusText || "Unknown",
+};
   }
 
   const questions = questionTables.map((table, index) =>
