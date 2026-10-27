@@ -15,7 +15,9 @@ import MistakeBook from "./MistakeBook";
 import { saveMistakesFromAnalysis } from "./utils/mistakeBookStorage";
 import QuestionStatusChart from "./QuestionStatusChart";
 
-const API = import.meta.env.VITE_API_URL || "";
+const API =
+  import.meta.env.VITE_API_URL ||
+  "https://examlens-api.onrender.com";
 const MAX_HTML_SIZE = 10 * 1024 * 1024;
 
 export default function App() {
