@@ -100,6 +100,12 @@ export function saveMistakesFromAnalysis(
         question.questionText ??
         question.question ??
         "Question text unavailable",
+        
+      questionText:
+        question.questionText || question.question || "Question text unavailable",
+      passage: question.passage ?? previous?.passage ?? null,
+      options: Array.isArray(question.options) ? question.options : [],
+
       options: Array.isArray(question.options)
         ? question.options
         : [],

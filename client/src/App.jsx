@@ -58,9 +58,26 @@ export default function App() {
       setSearch("");
     } catch (e) {
       console.error("Answer analyzer request failed:", e);
-      setError(
-        `${e.message || "Request failed."} Check that the backend is running and the API endpoint is configured correctly.`,
-      );
+
+      const message = e?.message || "Request failed.";
+      const isAccessDenied =
+        /TCS iON denied|RRB website denied|HTTP 403|access denied|forbidden/i.test(
+          message,
+        );
+      const isNetworkError =
+        e instanceof TypeError && /fetch|network|failed/i.test(message);
+
+      if (endpoint === "/api/analyze" && isAccessDenied) {
+        setError(
+          "TCS iON denied the automated URL request. Open the response sheet in your regular browser, save the page as an HTML file, then select ‘Analyze saved HTML’ below. The API responded, so this is an access restriction—not a backend connection error.",
+        );
+      } else if (isNetworkError) {
+        setError(
+          "Could not connect to the ExamLens API. Check your internet connection and the VITE_API_URL deployment setting, then try again.",
+        );
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -121,9 +138,14 @@ export default function App() {
         return;
       }
 
-      if (/<title>\s*(403|forbidden|access denied)\s*<\/title>/i.test(html)) {
+      if (
+        /<title>\s*(?:403|forbidden|access denied)\s*<\/title>/i.test(html) ||
+        /request denied|access has been denied|unable to service your request|you don't have permission to access/i.test(
+          html.slice(0, 50000),
+        )
+      ) {
         setError(
-          "This file contains an access-denied page, not the response sheet.",
+          "This file appears to contain an access-denied page, not the response sheet. Open the actual response sheet in your browser and save that page as HTML.",
         );
         return;
       }
@@ -346,8 +368,10 @@ export default function App() {
         </div>
 
         <p className="privacyNote">
-          Use a publicly accessible URL or an HTML file containing the response
-          sheet. Never enter account passwords or login credentials.
+          If URL analysis is denied by TCS iON, open the response sheet in your
+          regular browser and save that page as an HTML file. Then choose
+          “Analyze saved HTML” above. Never enter account passwords or login
+          credentials.
         </p>
       </section>
 

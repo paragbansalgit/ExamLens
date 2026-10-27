@@ -28,7 +28,12 @@ const styles = {
     gap: 12,
   },
   title: { margin: 0, fontSize: 26, lineHeight: 1.2, color: "#f8fafc" },
-  subtitle: { margin: "7px 0 0", color: "#94a3b8", fontSize: 14, lineHeight: 1.5 },
+  subtitle: {
+    margin: "7px 0 0",
+    color: "#94a3b8",
+    fontSize: 14,
+    lineHeight: 1.5,
+  },
   stats: {
     display: "flex",
     flexWrap: "wrap",
@@ -177,6 +182,27 @@ const styles = {
     background: "#0b1220",
     color: "#cbd5e1",
   },
+
+  passage: {
+    background: "#172438",
+    border: "1px solid #334155",
+    borderLeft: "4px solid #818cf8",
+    borderRadius: 10,
+    padding: "14px 16px",
+    color: "#e2e8f0",
+    fontSize: 14,
+    lineHeight: 1.75,
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+  },
+  passageTitle: {
+    color: "#a5b4fc",
+    fontSize: 12,
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+    marginBottom: 8,
+  },
 };
 
 export default function MistakeBook() {
@@ -204,7 +230,7 @@ export default function MistakeBook() {
 
   function removeItem(item) {
     const confirmed = window.confirm(
-      `Remove Question ${item.number ?? ""} from your Mistake Book?`
+      `Remove Question ${item.number ?? ""} from your Mistake Book?`,
     );
     if (confirmed && deleteMistake(item.id)) refresh();
   }
@@ -214,10 +240,11 @@ export default function MistakeBook() {
       all: mistakes.length,
       incorrect: mistakes.filter((item) => item.status === "incorrect").length,
       review: mistakes.filter((item) => item.status === "needs-review").length,
-      unattempted: mistakes.filter((item) => item.status === "unattempted").length,
+      unattempted: mistakes.filter((item) => item.status === "unattempted")
+        .length,
       revised: mistakes.filter((item) => item.revised).length,
     }),
-    [mistakes]
+    [mistakes],
   );
 
   const filtered = useMemo(() => {
@@ -267,7 +294,13 @@ export default function MistakeBook() {
           </p>
         </div>
         <div style={styles.stats}>
-          <span style={{ ...styles.status, background: "#172554", color: "#bfdbfe" }}>
+          <span
+            style={{
+              ...styles.status,
+              background: "#172554",
+              color: "#bfdbfe",
+            }}
+          >
             <BookOpenCheck size={13} /> {counts.all} saved
           </span>
         </div>
@@ -310,7 +343,9 @@ export default function MistakeBook() {
         <div style={styles.empty}>
           <BookOpenCheck size={28} style={{ marginBottom: 10, opacity: 0.8 }} />
           <div style={{ fontWeight: 700, marginBottom: 5 }}>
-            {mistakes.length === 0 ? "Your Mistake Book is empty" : "No matching questions"}
+            {mistakes.length === 0
+              ? "Your Mistake Book is empty"
+              : "No matching questions"}
           </div>
           <div style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.6 }}>
             {mistakes.length === 0
@@ -334,7 +369,8 @@ export default function MistakeBook() {
                 <div style={styles.cardTop}>
                   <div>
                     <div style={styles.questionHeading}>
-                      Question {item.number ?? "—"} · {item.examName || "ExamLens"}
+                      Question {item.number ?? "—"} ·{" "}
+                      {item.examName || "ExamLens"}
                     </div>
                     <div style={styles.meta}>
                       {item.section || "Uncategorized"}
@@ -342,10 +378,25 @@ export default function MistakeBook() {
                     </div>
                   </div>
                   <span style={{ ...styles.status, ...statusStyle }}>
-                    {isReview || isUnattempted ? <CircleAlert size={13} /> : <XStatusIcon />}
-                    {isReview ? "Needs review" : isUnattempted ? "Unattempted" : "Incorrect"}
+                    {isReview || isUnattempted ? (
+                      <CircleAlert size={13} />
+                    ) : (
+                      <XStatusIcon />
+                    )}
+                    {isReview
+                      ? "Needs review"
+                      : isUnattempted
+                        ? "Unattempted"
+                        : "Incorrect"}
                   </span>
                 </div>
+
+                {item.passage && (
+                  <div style={styles.passage}>
+                    <div style={styles.passageTitle}>Reading passage</div>
+                    <div>{item.passage}</div>
+                  </div>
+                )}
 
                 <p style={styles.question}>
                   {item.questionText || "Question text unavailable"}
@@ -445,7 +496,11 @@ export default function MistakeBook() {
                     style={styles.actionButton}
                     onClick={() => toggleRevised(item)}
                   >
-                    {item.revised ? <RotateCcw size={15} /> : <CheckCircle2 size={15} />}
+                    {item.revised ? (
+                      <RotateCcw size={15} />
+                    ) : (
+                      <CheckCircle2 size={15} />
+                    )}
                     {item.revised ? "Undo revised" : "Mark as revised"}
                   </button>
                   <button
