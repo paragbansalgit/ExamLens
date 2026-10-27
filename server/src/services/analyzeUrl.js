@@ -99,32 +99,29 @@ export async function analyzeUrl(rawUrl) {
       title: await page.title().catch(() => ""),
     });
 
-    if (!response.ok()) {
-      let responseBody = "";
+    
+if (!response.ok()) {
+  let responseBody = "";
 
-      try {
-        responseBody = (await response.text()).slice(0, 2000);
-      } catch {
-        responseBody = "(Response body could not be read)";
-      }
+  try {
+    responseBody = (await response.text()).slice(0, 3000);
+  } catch {
+    responseBody = "(Could not read response body)";
+  }
 
-      console.error("RRB HTTP error:", {
-        status,
-        statusText: response.statusText(),
-        url: finalUrl,
-        body: responseBody,
-      });
+  console.error("RRB HTTP error:", {
+    status: response.status(),
+    statusText: response.statusText(),
+    requestedUrl: validatedUrl.toString(),
+    finalUrl: page.url(),
+    body: responseBody,
+  });
 
-      const isAccessDenied =
-        status === 403 ||
-        /access denied|forbidden/i.test(responseBody);
+  throw new Error(
+    `The answer-sheet website returned HTTP ${response.status()}.`
+  );
+}
 
-      throw new Error(
-        isAccessDenied
-          ? "The RRB website denied the automated request. Open the response sheet in your browser and upload its saved HTML instead."
-          : `The answer-sheet website returned HTTP ${status}.`
-      );
-    }
 
     if (
       contentType &&
