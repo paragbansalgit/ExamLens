@@ -11,6 +11,7 @@ import { extractRrbSectionController } from "./adapters/rrbSectionController.js"
 import { scoreQuestions } from "./services/scoring.js";
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 10000);
 
 const MAX_HTML_SIZE = 10 * 1024 * 1024;
