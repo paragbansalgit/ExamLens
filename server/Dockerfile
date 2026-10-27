@@ -1,4 +1,3 @@
-
 FROM mcr.microsoft.com/playwright:v1.64.1-noble
 
 WORKDIR /app
@@ -10,9 +9,8 @@ COPY . .
 
 ENV NODE_ENV=production
 
-# Install a virtual display for headed Chromium
 RUN apt-get update \
     && apt-get install -y xvfb \
     && rm -rf /var/lib/apt/lists/*
 
-CMD ["xvfb-run", "-a", "npm", "start"]
+CMD ["npm", "start"]
