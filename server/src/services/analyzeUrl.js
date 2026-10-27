@@ -19,8 +19,8 @@ export async function analyzeUrl(rawUrl) {
 
   try {
     browser = await chromium.launch({
-  headless: true,
-});
+      headless: true,
+    });
 
     const context = await browser.newContext({
       javaScriptEnabled: true,
@@ -42,7 +42,6 @@ export async function analyzeUrl(rawUrl) {
     });
 
     // Validate every requested URL to reduce SSRF risk.
-    // Do not silently change the submitted URL's path.
     await page.route("**/*", async (route) => {
       try {
         const requestUrl = route.request().url();
@@ -56,8 +55,13 @@ export async function analyzeUrl(rawUrl) {
 
         await validatePublicUrl(requestUrl);
         await route.continue();
-      } catch {
-        await route.abort("blockedbyclient");
+      } catch (error) {
+        console.warn("Blocked browser request:", {
+          url: route.request().url(),
+          message: error.message,
+        });
+
+        await route.abort("blockedbyclient").catch(() => {});
       }
     });
 
@@ -85,6 +89,15 @@ export async function analyzeUrl(rawUrl) {
 
     const status = response.status();
     const contentType = response.headers()["content-type"] || "";
+    const finalUrl = page.url();
+
+    console.log("RRB response diagnostics:", {
+      status,
+      statusText: response.statusText(),
+      url: finalUrl,
+      contentType,
+      title: await page.title().catch(() => ""),
+    });
 
     if (!response.ok()) {
       let responseBody = "";
@@ -98,19 +111,19 @@ export async function analyzeUrl(rawUrl) {
       console.error("RRB HTTP error:", {
         status,
         statusText: response.statusText(),
-        url: response.url(),
+        url: finalUrl,
         body: responseBody,
       });
 
-    const isAccessDenied =
-  status === 403 ||
-  /<title>\s*403\s*<\/title>|access denied|forbidden/i.test(responseBody);
+      const isAccessDenied =
+        status === 403 ||
+        /access denied|forbidden/i.test(responseBody);
 
-throw new Error(
-  isAccessDenied
-    ? "The RRB website denied the automated request. Open the response sheet in your browser and upload its saved HTML instead."
-    : `The answer-sheet website returned HTTP ${status}.`
-);
+      throw new Error(
+        isAccessDenied
+          ? "The RRB website denied the automated request. Open the response sheet in your browser and upload its saved HTML instead."
+          : `The answer-sheet website returned HTTP ${status}.`
+      );
     }
 
     if (
@@ -123,69 +136,33 @@ throw new Error(
       );
     }
 
-    // Wait briefly for the question tables to appear after page scripts run.
     try {
-     
-try {
-  await page.waitForSelector(
-    "table.questionPlTbl, table.questionRowTbl",
-    { timeout: 20000 }
-  );
-} catch {
-  console.log("Question tables not found after waiting.");
-}
-
-const diagnostics = await page.evaluate(() => ({
-  title: document.title,
-  url: location.href,
-  bodyText: document.body?.innerText?.slice(0, 1500) || "",
-  questionPlTblCount: document.querySelectorAll("table.questionPlTbl").length,
-  questionRowTblCount: document.querySelectorAll("table.questionRowTbl").length,
-  tableCount: document.querySelectorAll("table").length,
-}));
-
-// console.log("RRB page diagnostics:", diagnostics);
-
-const html = await page.content();
-
-if (!html || html.length > MAX_HTML_SIZE) {
-  throw new Error("The answer-sheet HTML is empty or too large.");
-}
-
-const parsed = extractRrbSectionController(html, page.url());
-
-if (!parsed.questions || parsed.questions.length === 0) {
-  // Save a local diagnostic copy of the HTML for inspection.
-  const fs = await import("node:fs/promises");
-  await fs.writeFile("rrb-debug.html", html, "utf8");
-
-  console.error(
-    "No questions extracted. Saved page HTML to server/rrb-debug.html"
-  );
-
-  throw new Error(
-    "The page loaded, but no questions were extracted. " +
-      "Check the page diagnostics and server/rrb-debug.html."
-  );
-}
-
-const scored = scoreQuestions(parsed.questions);
-
-return {
-  ...parsed,
-  ...scored,
-  sourceUrl: page.url(),
-  analyzedAt: new Date().toISOString(),
-  questionCount: parsed.questions.length,
-};
-
+      await page.waitForSelector(
+        "table.questionPlTbl, table.questionRowTbl",
+        { timeout: 20000 }
+      );
     } catch {
-      // Continue so the parser can return a more useful diagnostic.
+      console.warn("Question tables were not found within 20 seconds.");
     }
+
+    const diagnostics = await page.evaluate(() => ({
+      title: document.title,
+      url: location.href,
+      bodyText: document.body?.innerText?.slice(0, 1500) || "",
+      questionPlTblCount: document.querySelectorAll(
+        "table.questionPlTbl"
+      ).length,
+      questionRowTblCount: document.querySelectorAll(
+        "table.questionRowTbl"
+      ).length,
+      tableCount: document.querySelectorAll("table").length,
+    }));
+
+    console.log("RRB page diagnostics:", diagnostics);
 
     const html = await page.content();
 
-    if (!html || html.length > MAX_HTML_SIZE) {
+    if (!html || Buffer.byteLength(html, "utf8") > MAX_HTML_SIZE) {
       throw new Error(
         "The answer-sheet HTML is empty or too large to process safely."
       );
@@ -193,10 +170,13 @@ return {
 
     const parsed = extractRrbSectionController(html, page.url());
 
-    if (!parsed.questions || parsed.questions.length === 0) {
+    if (!parsed?.questions || parsed.questions.length === 0) {
+      console.error("No questions extracted:", diagnostics);
+
       throw new Error(
         "The page loaded, but no questions could be extracted. " +
-          "The website may have returned a different page or changed its HTML."
+          "Check the RRB page diagnostics; the site may have returned " +
+          "a different page or changed its HTML."
       );
     }
 
@@ -210,12 +190,8 @@ return {
       questionCount: parsed.questions.length,
     };
   } finally {
-  if (browser) {
-    if (process.env.KEEP_BROWSER_OPEN === "true") {
-      // console.log("Debug mode: browser left open.");
-    } else {
+    if (browser) {
       await browser.close().catch(() => {});
     }
   }
-}
 }
