@@ -25,15 +25,14 @@ app.use(
 );
 
 // The JSON limit must allow for HTML plus JSON encoding overhead.
-app.use(express.json({ limit: "12mb" }));
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://exam-lens-8g96bw7ng-exam-lens.vercel.app",
-    ],
-  })
-);
+const corsOptions = {
+  origin: [
+    "http://localhost:5173",
+    "https://exam-lens-8g96bw7ng-exam-lens.vercel.app",
+  ],
+};
+
+app.use(cors(corsOptions));
 
 app.use(
   "/api",
